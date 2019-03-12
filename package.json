@@ -1,5 +1,5 @@
 {
-  "name": "express-jwt",
+  "name": "jwt-express",
   "version": "0.0.1",
   "description": "JsonWebToken (JWT) manager for express,",
   "main": "index.js",
@@ -8,14 +8,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/yar-on/express-jwt.git"
+    "url": "git+https://github.com/yar-on/jwt-express.git"
   },
   "author": "yar-on, ranamar16",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/yar-on/express-jwt/issues"
+    "url": "https://github.com/yar-on/jwt-express/issues"
   },
-  "homepage": "https://github.com/yar-on/express-jwt#readme",
+  "homepage": "https://github.com/yar-on/jwt-express#readme",
   "dependencies": {
     "jsonwebtoken": "^8.5.0"
   }
