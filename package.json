@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/yar-on/express-jwt/issues"
   },
-  "homepage": "https://github.com/yar-on/express-jwt#readme"
+  "homepage": "https://github.com/yar-on/express-jwt#readme",
+  "dependencies": {
+    "jsonwebtoken": "^8.5.0"
+  }
 }
