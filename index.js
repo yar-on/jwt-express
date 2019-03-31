@@ -85,11 +85,13 @@ class JWTExpress {
      */
     init(props, forceReInit = false) {
         forceReInit = (forceReInit === true);
-        if (!usrParams || forceReInit) {
-            if (props instanceof Object) {
-                initJwt(props.jwt, forceReInit);
-                initEnctyption(forceReInit);
+        if (!usrParams.init || forceReInit) {
+            usrParams.init = true;
+            if (!(props instanceof Object)) {
+                props = {};
             }
+            initJwt(props.jwt, forceReInit);
+            initEnctyption(forceReInit);
         }
     }
 
