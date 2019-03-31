@@ -1,16 +1,32 @@
 'use strict';
 const crypto = require('crypto');
+const Helpers = require('../helpers');
 
 const IV_LENGTH = 16; // For AES, this is always 16
 
-module.exports = class Crypter {
-    static getRandomString(length) {
-        length = parseInt(length) || 8;
-        return crypto.randomBytes(Math.ceil(length / 2))
-            .toString('hex') /** convert to hexadecimal format */
-            .slice(0, length);
-    }
+const getAvailableAlgorithm = () => {
+    const cryptoList = crypto.getCiphers();
+    const supportedCiphers = {
+        'aes-256-cbc': {
+            iv: 16,
+        },
+    };
+    const ciphers = {};
 
+    const matches = Helpers.matchArraysValues(cryptoList, Object.keys(supportedCiphers));
+
+    for (let key of matches){
+        if (supportedCiphers[key]){
+            ciphers[key] = supportedCiphers[key];
+        }
+    }
+    return ciphers;
+};
+
+const availableAlgorithm = getAvailableAlgorithm();
+
+const x ='a';
+module.exports = class Crypter {
     static encrypt(text, key) {
         const iv = crypto.randomBytes(IV_LENGTH);
         const cipher = crypto.createCipheriv('aes-256-cbc', new Buffer(key), iv);

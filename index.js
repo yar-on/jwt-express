@@ -52,9 +52,17 @@ class JWTExpress {
      */
 
     /**
+     * Props Jwt  object properties
+     * @typedef {Object} PropsEncrypt
+     * @property {String|undefined} algorithm
+     * @property {String} secret
+     */
+
+    /**
      * Props  object properties
      * @typedef {Object} Props
      * @property {PropsJwt} jwt
+     * @property {PropsEncrypt} encryption
      */
 
     /**
