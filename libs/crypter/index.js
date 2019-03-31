@@ -25,7 +25,6 @@ const getAvailableAlgorithm = () => {
 
 const availableAlgorithm = getAvailableAlgorithm();
 
-const x ='a';
 module.exports = class Crypter {
     static encrypt(text, key) {
         const iv = crypto.randomBytes(IV_LENGTH);
