@@ -15,8 +15,8 @@ const getAvailableAlgorithm = () => {
 
     const matches = Helpers.matchArraysValues(cryptoList, Object.keys(supportedCiphers));
 
-    for (let key of matches){
-        if (supportedCiphers[key]){
+    for (let key of matches) {
+        if (supportedCiphers[key]) {
             ciphers[key] = supportedCiphers[key];
         }
     }
@@ -26,9 +26,9 @@ const getAvailableAlgorithm = () => {
 const availableAlgorithm = getAvailableAlgorithm();
 
 module.exports = class Crypter {
-    static encrypt(text, key) {
+    static encrypt(algorithm, text, key) {
         const iv = crypto.randomBytes(IV_LENGTH);
-        const cipher = crypto.createCipheriv('aes-256-cbc', new Buffer(key), iv);
+        const cipher = crypto.createCipheriv(algorithm, new Buffer(key), iv);
         let encrypted = cipher.update(text);
 
         encrypted = Buffer.concat([encrypted, cipher.final()]);
@@ -36,11 +36,11 @@ module.exports = class Crypter {
         return iv.toString('hex') + ':' + encrypted.toString('hex');
     }
 
-    static decrypt(text, key) {
+    static decrypt(algorithm, text, key) {
         const textParts = text.split(':');
         const iv = new Buffer(textParts.shift(), 'hex');
         const encryptedText = new Buffer(textParts.join(':'), 'hex');
-        const decipher = crypto.createDecipheriv('aes-256-cbc', new Buffer(key), iv);
+        const decipher = crypto.createDecipheriv(algorithm, new Buffer(key), iv);
         let decrypted = decipher.update(encryptedText);
 
         decrypted = Buffer.concat([decrypted, decipher.final()]);

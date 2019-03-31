@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const usrParams = require('./params');
+const crypter = require('./libs/crypter');
 
 const DEFAULT_PROPS = {
     jwt: {
@@ -17,7 +18,11 @@ const DEFAULT_PROPS = {
             // mutatePayload: false
         },
         secret: null,
-    }
+        useEncrypt: false,
+    },
+    encryption: {
+        algorithm: 'aes-256-cbc',
+    },
 };
 
 const initJwt = (propsJwt, forceReInit) => {
@@ -28,6 +33,13 @@ const initJwt = (propsJwt, forceReInit) => {
             options: options,
             secret: secret,
         };
+    }
+};
+
+const initEnctyption = (forceReInit) => {
+    const encryption = Object.assign({}, DEFAULT_PROPS.encryption, usrParams.encryption);
+    if (!usrParams.encryption || forceReInit) {
+        usrParams.encryption = encryption;
     }
 };
 
@@ -75,6 +87,7 @@ class JWTExpress {
         if (!usrParams || forceReInit) {
             if (props instanceof Object) {
                 initJwt(props.jwt, forceReInit);
+                initEnctyption(forceReInit);
             }
         }
     }
@@ -95,6 +108,9 @@ class JWTExpress {
         let err = null;
         try {
             token = jwt.sign({payload: payload}, usrParams.jwt.secret, options);
+            if (usrParams.jwt.useEncrypt) {
+                token = crypter.encrypt(usrParams.encryption.algorithm, token, usrParams.encryption.secret)
+            }
         } catch (e) {
             err = e;
         }
@@ -119,6 +135,9 @@ class JWTExpress {
         let payload = null;
         let err = null;
         try {
+            if (usrParams.jwt.useEncrypt) {
+                token = crypter.decrypt(usrParams.encryption.algorithm, token, usrParams.encryption.secret)
+            }
             payload = jwt.verify(token, usrParams.jwt.secret, options).payload;
         } catch (e) {
             err = e;
