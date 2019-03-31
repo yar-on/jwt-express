@@ -61,6 +61,7 @@ class JWTExpress {
      * @typedef {Object} PropsJwt
      * @property {PropsJwtOptions|undefined} options
      * @property {String} secret
+     * @property {Boolean} useEncrypt
      */
 
     /**
