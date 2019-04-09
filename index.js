@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const usrParams = require('./params');
 const crypter = require('./libs/crypter');
+const JwtExpressError = require('./errors');
 
 const DEFAULT_PROPS = {
     jwt: {
@@ -28,10 +29,15 @@ const DEFAULT_PROPS = {
 
                     if (scheme === "Bearer") {
                         return token;
+                    } else {
+                        throw new JwtExpressError(JwtExpressError.ErrorCodes.INVALID_TOKEN_SCHEMA);
                     }
+                } else {
+                    throw new JwtExpressError(JwtExpressError.ErrorCodes.INVALID_TOKEN);
                 }
+            } else {
+                throw new JwtExpressError(JwtExpressError.ErrorCodes.MISSING_TOKEN);
             }
-            return null
         },
     },
     encryption: {
