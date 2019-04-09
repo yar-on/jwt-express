@@ -39,6 +39,9 @@ const DEFAULT_PROPS = {
                 throw new JwtExpressError(JwtExpressError.ErrorCodes.MISSING_TOKEN);
             }
         },
+        middleware: {
+            tokenPayloadKey: 'user',
+        },
     },
     encryption: {
         algorithm: 'aes-256-cbc',
@@ -77,9 +80,16 @@ class JWTExpress {
      */
 
     /**
+     * Props Jwt options object properties
+     * @typedef {Object} PropsJwtMiddleware
+     * @property {String|null|undefined} tokenPayloadKey
+     */
+
+    /**
      * Props Jwt  object properties
      * @typedef {Object} PropsJwt
      * @property {PropsJwtOptions|undefined} options
+     * @property {PropsJwtMiddleware|undefined} middleware
      * @property {String} secret
      * @property {Boolean} useEncrypt
      * @property {Function} getToken
@@ -173,7 +183,26 @@ class JWTExpress {
     }
 
     middleware(req, res, next) {
+        try {
+            const token = usrParams.jwt.getToken(req);
+            if (!token) {
+                throw new JwtExpressError(JwtExpressError.ErrorCodes.INVALID_TOKEN);
+            } else {
+                const tokenPayload = this.verify(token, usrParams.jwt.options);
+                if (!tokenPayload) {
+                    throw new JwtExpressError(JwtExpressError.ErrorCodes.CORRUPTED_TOKEN);
+                } else {
+                    req[usrParams.jwt.middleware.tokenPayloadKey] = tokenPayload;
+                    next();
+                }
+            }
+        } catch (e) {
+            if (e instanceof JwtExpressError) {
 
+            } else {
+                next(e);
+            }
+        }
     }
 }
 
