@@ -19,6 +19,20 @@ const DEFAULT_PROPS = {
         },
         secret: null,
         useEncrypt: false,
+        getToken: (req) => {
+            if (req.headers && req.headers.authorization && typeof req.headers.authorization === "string") {
+                const parts = req.headers.authorization.split(' ');
+                if (parts.length === 2) {
+                    const scheme = parts[0];
+                    const token = parts[1];
+
+                    if (scheme === "Bearer") {
+                        return token;
+                    }
+                }
+            }
+            return null
+        },
     },
     encryption: {
         algorithm: 'aes-256-cbc',
@@ -62,6 +76,7 @@ class JWTExpress {
      * @property {PropsJwtOptions|undefined} options
      * @property {String} secret
      * @property {Boolean} useEncrypt
+     * @property {Function} getToken
      */
 
     /**
