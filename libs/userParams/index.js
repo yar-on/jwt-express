@@ -1,4 +1,5 @@
 const Helpers = require('../helpers');
+const JwtExpressError = require('../jwt/errors/index');
 
 const DEFAULT_PARAMS = {
     jwt: {
