@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/yar-on/jwt-express#readme",
   "dependencies": {
-    "jsonwebtoken": "^8.5.0"
+    "jsonwebtoken": "^8.5.0",
+    "ms": "^2.1.1"
   }
 }
