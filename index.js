@@ -1,70 +1,6 @@
-const jwt = require('jsonwebtoken');
-const usrParams = require('./params');
-const crypter = require('./libs/crypter');
-const JwtExpressError = require('./errors');
+const userParams = require('./libs/userParams');
+const jwt = require('./libs/jwt');
 
-const DEFAULT_PROPS = {
-    jwt: {
-        options: {
-            algorithm: 'HS256',
-            expiresIn: '5m',
-            // notBefore: undefined,
-            // audience: undefined,
-            // issuer: undefined,
-            // jwtid: undefined,
-            // subject: undefined,
-            // noTimestamp: undefined,
-            // header: undefined,
-            // keyid: undefined,
-            // mutatePayload: false
-        },
-        secret: null,
-        useEncrypt: false,
-        getToken: (req) => {
-            if (req.headers && req.headers.authorization && typeof req.headers.authorization === "string") {
-                const parts = req.headers.authorization.split(' ');
-                if (parts.length === 2) {
-                    const scheme = parts[0];
-                    const token = parts[1];
-
-                    if (scheme === "Bearer") {
-                        return token;
-                    } else {
-                        throw new JwtExpressError(JwtExpressError.ErrorCodes.INVALID_TOKEN_SCHEMA);
-                    }
-                } else {
-                    throw new JwtExpressError(JwtExpressError.ErrorCodes.INVALID_TOKEN);
-                }
-            } else {
-                throw new JwtExpressError(JwtExpressError.ErrorCodes.MISSING_TOKEN);
-            }
-        },
-        middleware: {
-            tokenPayloadKey: 'user',
-        },
-    },
-    encryption: {
-        algorithm: 'aes-256-cbc',
-    },
-};
-
-const initJwt = (propsJwt, forceReInit) => {
-    const options = Object.assign({}, DEFAULT_PROPS.jwt.options, propsJwt.options);
-    const secret = propsJwt.secret;
-    if (!usrParams.jwt || forceReInit) {
-        usrParams.jwt = {
-            options: options,
-            secret: secret,
-        };
-    }
-};
-
-const initEnctyption = (forceReInit) => {
-    const encryption = Object.assign({}, DEFAULT_PROPS.encryption, usrParams.encryption);
-    if (!usrParams.encryption || forceReInit) {
-        usrParams.encryption = encryption;
-    }
-};
 
 class JWTExpress {
     /**
@@ -110,100 +46,27 @@ class JWTExpress {
      */
 
     /**
-     * Init params by user properties
-     * @param {Props} props
+     * Init Props by user params
+     * @param {Props} params
      * @param {boolean} forceReInit
      */
-    init(props, forceReInit = false) {
-        forceReInit = (forceReInit === true);
-        if (!usrParams.init || forceReInit) {
-            usrParams.init = true;
-            if (!(props instanceof Object)) {
-                props = {};
-            }
-            initJwt(props.jwt, forceReInit);
-            initEnctyption(forceReInit);
-        }
+    static init(params, forceReInit = false) {
+        userParams.init(params)
     }
 
-    sign(payload, options = {}, callback = null) {
-        if (typeof callback !== "function") {
-            callback = null;
-        }
-        if (!(options instanceof Object)) {
-            if (typeof options === "function") {
-                callback = options;
-            }
-            options = {};
-        }
-
-        options = Object.assign({}, usrParams.jwt.options, options);
-        let token = null;
-        let err = null;
-        try {
-            token = jwt.sign({payload: payload}, usrParams.jwt.secret, options);
-            if (usrParams.jwt.useEncrypt) {
-                token = crypter.encrypt(usrParams.encryption.algorithm, token, usrParams.encryption.secret)
-            }
-        } catch (e) {
-            err = e;
-        }
-        if (callback) {
-            callback(err, token)
-        }
-        return token;
+    static middleware(req, res, next) {
+        return jwt.middleware(req, res, next);
     }
 
-    verify(token, options = {}, callback = null) {
-        if (typeof callback !== "function") {
-            callback = null;
-        }
-        if (!(options instanceof Object)) {
-            if (typeof options === "function") {
-                callback = options;
-            }
-            options = {};
-        }
-
-        options = Object.assign({}, usrParams.jwt, options);
-        let payload = null;
-        let err = null;
-        try {
-            if (usrParams.jwt.useEncrypt) {
-                token = crypter.decrypt(usrParams.encryption.algorithm, token, usrParams.encryption.secret)
-            }
-            payload = jwt.verify(token, usrParams.jwt.secret, options).payload;
-        } catch (e) {
-            err = e;
-        }
-        if (callback) {
-            callback(err, payload)
-        }
-        return payload;
+    static sign(payload, options = {}, callback = null) {
+        return jwt.sign(payload, options, callback);
     }
 
-    middleware(req, res, next) {
-        try {
-            const token = usrParams.jwt.getToken(req);
-            if (!token) {
-                throw new JwtExpressError(JwtExpressError.ErrorCodes.INVALID_TOKEN);
-            } else {
-                const tokenPayload = this.verify(token, usrParams.jwt.options);
-                if (!tokenPayload) {
-                    throw new JwtExpressError(JwtExpressError.ErrorCodes.CORRUPTED_TOKEN);
-                } else {
-                    req[usrParams.jwt.middleware.tokenPayloadKey] = tokenPayload;
-                    next();
-                }
-            }
-        } catch (e) {
-            if (e instanceof JwtExpressError) {
-
-            } else {
-                next(e);
-            }
-        }
+    static verify(token, options = {}, callback = null) {
+        return jwt.verify(token, options, callback);
     }
+
+
 }
 
 module.exports = new JWTExpress();
