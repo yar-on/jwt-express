@@ -40,6 +40,13 @@ const DEFAULT_PARAMS = {
         middleware: {
             tokenPayloadKey: 'user',
         },
+        blacklist: {
+            driverName: 'memory',
+            driverParams: {
+                clearExpiredItemsInterval: '5m',
+                clearExpiredItemsIntervalDelay: null,
+            },
+        },
     },
     encryption: {
         algorithm: 'aes-256-cbc',

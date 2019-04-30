@@ -16,9 +16,23 @@ class JWTExpress {
      */
 
     /**
-     * Props Jwt options object properties
+     * Props Jwt middleware object properties
      * @typedef {Object} PropsJwtMiddleware
      * @property {String|null|undefined} tokenPayloadKey
+     */
+
+    /**
+     * Props Jwt blacklist object
+     * @typedef {Object} PropsJwtBlacklist
+     * @property {String} driverName
+     * @property {PropsJwtBlacklistDriverParams|null|undefined} driverParams
+     */
+
+    /**
+     * Props Jwt blacklist driver params
+     * @typedef {Object} PropsJwtBlacklistDriverParams
+     * @property {String|Number|null|undefined} clearExpiredItemsInterval
+     * @property {String|Number|null|undefined} clearExpiredItemsIntervalDelay
      */
 
     /**
@@ -26,6 +40,7 @@ class JWTExpress {
      * @typedef {Object} PropsJwt
      * @property {PropsJwtOptions|undefined} options
      * @property {PropsJwtMiddleware|undefined} middleware
+     * @property {PropsJwtBlacklist|undefined} blacklist
      * @property {String} secret
      * @property {Boolean} useEncrypt
      * @property {Function} getToken
