@@ -24,10 +24,22 @@ module.exports = class Helpers {
                     if (value instanceof Object && key in acc) {
                         value = this.deepMerge(acc[key], value);
                     }
-                    acc = { ...acc, [key]: value }
+                    acc = {...acc, [key]: value}
                 }
             }
         }
         return acc
+    }
+
+    static timePast(time, curTime = null) {
+        if (!curTime) {
+            curTime = new Date();
+        }
+
+        if (!(time instanceof Object)) {
+            time = new Date(time);
+        }
+
+        return time < curTime;
     }
 };
