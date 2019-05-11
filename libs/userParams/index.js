@@ -18,6 +18,7 @@ const DEFAULT_PARAMS = {
         },
         secret: null,
         useEncrypt: false,
+        useBlacklist: false,
         getToken: (req) => {
             if (req.headers && req.headers.authorization && typeof req.headers.authorization === "string") {
                 const parts = req.headers.authorization.split(' ');
@@ -46,6 +47,7 @@ const DEFAULT_PARAMS = {
                 clearExpiredItemsInterval: '5m',
                 clearExpiredItemsIntervalDelay: null,
             },
+            customInstance: null,
         },
     },
     encryption: {
