@@ -83,21 +83,21 @@ module.exports = class UserParams {
         return undefined;
     }
 
-    static set(key, value) {
-        if (key && typeof key === "string") {
-            let keyArr = key.split('.');
-            let val = this.userParams;
-            let keyCount = keyArr.length;
-            for (let i = 0; i < keyCount - 1; i++) {
-                val = val[keyArr[i]];
-                if (val === undefined || val === null) {
-                    val = {};
-                }
-                if (!(val instanceof Object)) {
-                    throw new Error(`${keyArr.slice(0, i + 1).join('.')} is not an object (actual type ${typeof val})`);
-                }
-            }
-            val[keyArr[keyCount - 1]] = value;
-        }
-    }
+    // static set(key, value) {
+    //     if (key && typeof key === "string") {
+    //         let keyArr = key.split('.');
+    //         let val = this.userParams;
+    //         let keyCount = keyArr.length;
+    //         for (let i = 0; i < keyCount - 1; i++) {
+    //             val = val[keyArr[i]];
+    //             if (val === undefined || val === null) {
+    //                 val = {};
+    //             }
+    //             if (!(val instanceof Object)) {
+    //                 throw new Error(`${keyArr.slice(0, i + 1).join('.')} is not an object (actual type ${typeof val})`);
+    //             }
+    //         }
+    //         val[keyArr[keyCount - 1]] = value;
+    //     }
+    // }
 };
