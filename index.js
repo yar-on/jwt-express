@@ -43,6 +43,7 @@ class JWTExpress {
      * @property {PropsJwtBlacklist|undefined} blacklist
      * @property {String} secret
      * @property {Boolean} useEncrypt
+     * @property {Boolean} useBlacklist
      * @property {Function} getToken
      */
 
