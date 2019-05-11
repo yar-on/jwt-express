@@ -12,8 +12,8 @@ module.exports = class JwtExpressBlacklistDriverMemory extends JwtExpressBlackli
         return this._blacklist.hasOwnProperty(token);
     }
 
-    set(token, item) {
-        this._blacklist[token] = item.exp;
+    set(token, expiredTime) {
+        this._blacklist[token] = expiredTime;
     }
 
     clearOld() {
