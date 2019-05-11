@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const crypter = require('../crypter');
 const JwtExpressError = require('./errors');
+const BlacklistManager = require('./blacklistManager');
 const userParams = require('../userParams');
 
 module.exports = class JwtManager {
@@ -15,11 +16,11 @@ module.exports = class JwtManager {
             options = {};
         }
 
-        options = Object.assign({}, userParams.get('jwt.options, options'));
+        options = Object.assign({}, userParams.get('jwt.options'), options);
         let token = null;
         let err = null;
         try {
-            token = jwt.sign({payload: payload}, userParams.get('jwt.secret, options'));
+            token = jwt.sign({payload: payload}, userParams.get('jwt.secret'), options);
             if (userParams.get('jwt.useEncrypt')) {
                 token = crypter.encrypt(userParams.get('encryption.algorithm'), token, userParams.get('encryption.secret'));
             }
@@ -32,25 +33,22 @@ module.exports = class JwtManager {
         return token;
     }
 
-    static verify(token, options = {}, callback = null) {
+    static verify(token, callback = null, onlyPayload = true) {
         if (typeof callback !== "function") {
             callback = null;
         }
-        if (!(options instanceof Object)) {
-            if (typeof options === "function") {
-                callback = options;
-            }
-            options = {};
-        }
+        onlyPayload = onlyPayload === true;
 
-        options = Object.assign({}, userParams.get('jwt, options'));
         let payload = null;
         let err = null;
         try {
             if (userParams.get('jwt.useEncrypt')) {
                 token = crypter.decrypt(userParams.get('encryption.algorithm'), token, userParams.get('encryption.secret'))
             }
-            payload = jwt.verify(token, userParams.get('jwt.secret, options')).payload;
+            payload = jwt.verify(token, userParams.get('jwt.secret, options'));
+            if (onlyPayload) {
+                payload = payload.payload;
+            }
         } catch (e) {
             err = e;
         }
@@ -66,10 +64,19 @@ module.exports = class JwtManager {
             if (!token) {
                 throw new JwtExpressError(JwtExpressError.ErrorCodes.INVALID_TOKEN);
             } else {
-                const tokenPayload = this.verify(token, userParams.get('jwt.options'));
-                if (!tokenPayload) {
+                const tokenData = this.verify(token, userParams.get('jwt.options'), null, false);
+                const tokenPayload = (tokenData instanceof Object) ? tokenData.payload : null;
+                if (!tokenData || !tokenPayload) {
                     throw new JwtExpressError(JwtExpressError.ErrorCodes.CORRUPTED_TOKEN);
                 } else {
+                    if (userParams.get('jwt.useBlacklist')) {
+                        const blacklistDriver = BlacklistManager.getDriver();
+                        if (blacklistDriver.isExists(token)) {
+                            throw new JwtExpressError(JwtExpressError.ErrorCodes.TOKEN_BLACKLISTED);
+                        } else {
+                            blacklistDriver.set(token, tokenData.exp); // set (&validate) expired date
+                        }
+                    }
                     req[userParams.get('jwt.middleware.tokenPayloadKey')] = tokenPayload;
                     next();
                 }
