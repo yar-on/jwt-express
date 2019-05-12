@@ -42,4 +42,20 @@ module.exports = class Helpers {
 
         return time < curTime;
     }
+
+    static getProperty(obj, key) {
+        if (key && typeof key === "string") {
+            try {
+                let keyArr = key.split('.');
+                let val = obj;
+                let keyCount = keyArr.length;
+                for (let i = 0; i < keyCount; i++) {
+                    val = val[keyArr[i]];
+                }
+                return val;
+            } catch (ignore) {
+            }
+        }
+        return undefined;
+    }
 };
