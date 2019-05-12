@@ -2,7 +2,7 @@ const userParams = require('./libs/userParams');
 const jwt = require('./libs/jwt');
 
 
-class JWTExpress {
+module.exports = class JWTExpress {
     /**
      * Props Jwt options object properties
      * @typedef {Object} PropsJwtOptions
@@ -78,11 +78,9 @@ class JWTExpress {
         return jwt.sign(payload, options, callback);
     }
 
-    static verify(token, options = {}, callback = null) {
-        return jwt.verify(token, options, callback);
+    static verify(token, callback = null, onlyPayload = true) {
+        return jwt.verify(token, callback, onlyPayload);
     }
 
 
 }
-
-module.exports = new JWTExpress();
