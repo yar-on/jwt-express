@@ -37,7 +37,7 @@ module.exports = class JwtManager {
         if (typeof callback !== "function") {
             callback = null;
         }
-        onlyPayload = onlyPayload === true;
+        onlyPayload = onlyPayload !== false;
 
         let payload = null;
         let err = null;
