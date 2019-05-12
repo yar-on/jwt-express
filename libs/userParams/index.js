@@ -63,24 +63,14 @@ module.exports = class UserParams {
     static init(params) {
         if (firstInit) {
             firstInit = false;
-            this.userParams = Helpers.deepMerge(DEFAULT_PARAMS, params);
+            const tmpUserParams = Helpers.deepMerge(DEFAULT_PARAMS, params);
+            this.validate(tmpUserParams);
+            this.userParams = tmpUserParams;
         }
     }
 
     static get(key) {
-        if (key && typeof key === "string") {
-            try {
-                let keyArr = key.split('.');
-                let val = this.userParams;
-                let keyCount = keyArr.length;
-                for (let i = 0; i < keyCount; i++) {
-                    val = val[keyArr[i]];
-                }
-                return val;
-            } catch (ignore) {
-            }
-        }
-        return undefined;
+        return Helpers.getProperty(this.userParams, key);
     }
 
     // static set(key, value) {
