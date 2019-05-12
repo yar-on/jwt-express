@@ -45,7 +45,7 @@ module.exports = class JwtManager {
             if (userParams.get('jwt.useEncrypt')) {
                 token = crypter.decrypt(userParams.get('encryption.algorithm'), token, userParams.get('encryption.secret'))
             }
-            payload = jwt.verify(token, userParams.get('jwt.secret, options'));
+            payload = jwt.verify(token, userParams.get('jwt.secret'));
             if (onlyPayload) {
                 payload = payload.payload;
             }
