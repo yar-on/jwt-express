@@ -1,7 +1,5 @@
 const errorCodes = require('./errorCodes');
 module.exports = class JwtExpressError extends Error {
-    static ErrorCodes = errorCodes;
-
     constructor(errorCode) {
         super();
         if (errorCodes[errorCode]) {
@@ -13,5 +11,8 @@ module.exports = class JwtExpressError extends Error {
 
     get errorCode() {
         return this._errorCode;
+    }
+    static get ErrorCodes(){
+        return errorCodes;
     }
 };
