@@ -115,32 +115,7 @@ module.exports = class JwtManager {
         }
         return payload;
     }
-
-    static decode(token, callback = null, onlyPayload = true) {
-        if (typeof callback !== "function") {
-            callback = null;
-        }
-        onlyPayload = onlyPayload !== false;
-
-        let payload = null;
-        let err = null;
-        try {
-            if (userParams.get('jwt.useEncrypt')) {
-                token = crypter.decrypt(userParams.get('encryption.algorithm'), token, userParams.get('encryption.secret'))
-            }
-            payload = jwt.decode(token, userParams.get('jwt.secret'));
-            if (onlyPayload) {
-                payload = payload.payload;
-            }
-        } catch (e) {
-            err = e;
-        }
-        if (callback) {
-            callback(err, payload)
-        }
-        return payload;
-    }
-
+    
     static middleware(req, res, next) {
         try {
             const token = userParams.get('jwt.getToken')(req);
