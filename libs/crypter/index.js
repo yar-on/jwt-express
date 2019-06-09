@@ -28,7 +28,7 @@ const availableAlgorithm = getAvailableAlgorithm();
 module.exports = class Crypter {
     static encrypt(algorithm, text, key) {
         const iv = crypto.randomBytes(IV_LENGTH);
-        const cipher = crypto.createCipheriv(algorithm, new Buffer(key), iv);
+        const cipher = crypto.createCipheriv(algorithm, Buffer.from(key), iv);
         let encrypted = cipher.update(text);
 
         encrypted = Buffer.concat([encrypted, cipher.final()]);
@@ -38,9 +38,9 @@ module.exports = class Crypter {
 
     static decrypt(algorithm, text, key) {
         const textParts = text.split(':');
-        const iv = new Buffer(textParts.shift(), 'hex');
-        const encryptedText = new Buffer(textParts.join(':'), 'hex');
-        const decipher = crypto.createDecipheriv(algorithm, new Buffer(key), iv);
+        const iv = Buffer.from(textParts.shift(), 'hex');
+        const encryptedText = Buffer.from(textParts.join(':'), 'hex');
+        const decipher = crypto.createDecipheriv(algorithm, Buffer.from(key), iv);
         let decrypted = decipher.update(encryptedText);
 
         decrypted = Buffer.concat([decrypted, decipher.final()]);
