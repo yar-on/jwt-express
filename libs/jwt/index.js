@@ -16,7 +16,7 @@ const responseError = (e, req, res, next) => {
             if (parts.length > 0) {
                 parts = parts[0].split(':');
                 if (parts.length === 2) {
-                    extraObject[parts[0].trim().toLowerCase()] = parts[1].trim().toLowerCase();
+                    extraObject[parts[0].trim().toLowerCase()] = parts[1].trim();
                 }
             }
             if (error) {
