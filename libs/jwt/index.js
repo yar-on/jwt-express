@@ -56,6 +56,13 @@ module.exports = class JwtManager {
         if (typeof callback !== "function") {
             callback = null;
         }
+        if (!(options instanceof Object)) {
+            if (typeof options === "function") {
+                callback = options;
+            }
+            options = {};
+        }
+
         onlyPayload = onlyPayload !== false;
 
         options = Object.assign({}, userParams.get('jwt.options'), options);
