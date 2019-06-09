@@ -78,9 +78,8 @@ module.exports = class JWTExpress {
         return jwt.sign(payload, options, callback);
     }
 
-    static verify(token, callback = null, onlyPayload = true) {
-        return jwt.verify(token, callback, onlyPayload);
+    static verify(token, options = {}, callback = null, onlyPayload = true) {
+        return jwt.verify(token, options, callback, onlyPayload);
     }
 
-
-}
+};

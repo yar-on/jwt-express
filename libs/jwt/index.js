@@ -52,19 +52,20 @@ module.exports = class JwtManager {
         return token;
     }
 
-    static verify(token, callback = null, onlyPayload = true) {
+    static verify(token, options = {}, callback = null, onlyPayload = true) {
         if (typeof callback !== "function") {
             callback = null;
         }
         onlyPayload = onlyPayload !== false;
 
+        options = Object.assign({}, userParams.get('jwt.options'), options);
         let payload = null;
 
         try {
             if (userParams.get('jwt.useEncrypt')) {
                 token = crypter.decrypt(userParams.get('encryption.algorithm'), token, userParams.get('encryption.secret'))
             }
-            payload = jwt.verify(token, userParams.get('jwt.secret'));
+            payload = jwt.verify(token, userParams.get('jwt.secret'), options);
             if (onlyPayload) {
                 payload = payload.payload;
             }
