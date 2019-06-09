@@ -115,7 +115,7 @@ module.exports = class JwtManager {
         }
         return payload;
     }
-    
+
     static middleware(req, res, next) {
         try {
             const token = userParams.get('jwt.getToken')(req);
@@ -176,7 +176,7 @@ module.exports = class JwtManager {
                 }
             }
         } catch (e) {
-            // validate is expired json
+            // validate is expired token
             if (e instanceof Object && e.name === 'TokenExpiredError') {
                 const refreshToken = userParams.get('jwt.refresh.getToken')(req);
                 if (!refreshToken) {
