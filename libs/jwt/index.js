@@ -5,6 +5,25 @@ const BlacklistManager = require('./blacklistManager');
 const userParams = require('../userParams');
 
 const responseError = (e, req, res, next) => {
+    if (e instanceof Object) {
+        // convert json web token error to local error object
+        if (e.name === "TokenExpiredError") {
+            e = new JwtExpressError(JwtExpressError.ErrorCodes.TOKEN_EXPIRED);
+        } else if (e.name === "JsonWebTokenError" && typeof e.message === "string") {
+            let parts = e.message.split('.');
+            let extraObject = {};
+            const errorCode = parts.shift().trim().toUpperCase().replace(new RegExp(' ', 'g'), '_');
+            if (parts.length > 0) {
+                parts = parts[0].split(':');
+                if (parts.length === 2) {
+                    extraObject[parts[0].trim().toLowerCase()] = parts[1].trim().toLowerCase();
+                }
+            }
+            if (error) {
+                e = new JwtExpressError(errorCode, extraObject);
+            }
+        }
+    }
     if (e instanceof JwtExpressError) {
         const responses = userParams.get('localization.responses');
         const errorCode = e.errorCode;
@@ -13,6 +32,14 @@ const responseError = (e, req, res, next) => {
             response = responses[errorCode];
         }
         res.status(response.httpCode);
+        let message = response.message;
+        if (message.includes('${')) {
+            for (let key in e.extraObject) {
+                if (e.extraObject.hasOwnProperty(key) && ["string", "number"].includes(typeof e.extraObject.hasOwnProperty(key))) {
+                    message.replace(new RegExp(`\${${key}}`, 'g'), e.extraObject[key]);
+                }
+            }
+        }
         if (req.header['Accept'] === 'application/json') {
             res.json({message: response.message});
         } else {
@@ -175,7 +202,7 @@ module.exports = class JwtManager {
             }
         } catch (e) {
             // validate is expired json
-            if (false) {
+            if (e instanceof Object && e.name === 'TokenExpiredError') {
                 const refreshToken = userParams.get('jwt.refresh.getToken')(req);
                 if (!refreshToken) {
                     throw new JwtExpressError(JwtExpressError.ErrorCodes.INVALID_TOKEN);
