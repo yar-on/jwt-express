@@ -41,7 +41,7 @@ module.exports = class JwtExpressBlacklistDriverBase {
         throw new Error('unimplemented isExists function');
     }
 
-    set(token, item) {
+    set(token, expiredTime) {
         throw new Error('unimplemented set function');
     }
 

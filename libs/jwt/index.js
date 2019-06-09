@@ -4,6 +4,25 @@ const JwtExpressError = require('./errors');
 const BlacklistManager = require('./blacklistManager');
 const userParams = require('../userParams');
 
+const responseError = (e, req, res, next) => {
+    if (e instanceof JwtExpressError) {
+        const responses = userParams.get('localization.responses');
+        const errorCode = e.errorCode;
+        let response = responses.UNKNOWN_ERROR;
+        if (responses[errorCode] instanceof Object) {
+            response = responses[errorCode];
+        }
+        res.status(response.httpCode);
+        if (req.header['Accept'] === 'application/json') {
+            res.json({message: response.message});
+        } else {
+            res.send(response.message);
+        }
+    } else {
+        next(e);
+    }
+};
+
 module.exports = class JwtManager {
     static sign(payload, options = {}, callback = null) {
         if (typeof callback !== "function") {
@@ -85,7 +104,7 @@ module.exports = class JwtManager {
 
     static middleware(req, res, next) {
         try {
-            const token = userParams.get(jwt.getToken)(req);
+            const token = userParams.get('jwt.getToken')(req);
             if (!token) {
                 throw new JwtExpressError(JwtExpressError.ErrorCodes.INVALID_TOKEN);
             } else {
@@ -105,22 +124,7 @@ module.exports = class JwtManager {
                 }
             }
         } catch (e) {
-            if (e instanceof JwtExpressError) {
-                const responses = userParams.get('localization.responses');
-                const errorCode = e.errorCode;
-                let response = responses.UNKNOWN_ERROR;
-                if (responses[errorCode] instanceof Object) {
-                    response = responses[errorCode];
-                }
-                res.status(response.httpCode);
-                if (req.header['Accept'] === 'application/json') {
-                    res.json({message: response.message});
-                } else {
-                    res.send(response.message);
-                }
-            } else {
-                next(e);
-            }
+            responseError(e, req, res, next);
         }
     }
 
@@ -182,22 +186,34 @@ module.exports = class JwtManager {
                 }
             }
         } catch (e) {
-            if (e instanceof JwtExpressError) {
-                const responses = userParams.get('localization.responses');
-                const errorCode = e.errorCode;
-                let response = responses.UNKNOWN_ERROR;
-                if (responses[errorCode] instanceof Object) {
-                    response = responses[errorCode];
-                }
-                res.status(response.httpCode);
-                if (req.header['Accept'] === 'application/json') {
-                    res.json({message: response.message});
-                } else {
-                    res.send(response.message);
-                }
+            responseError(e, req, res, next);
+        }
+    }
+
+    static signOutMiddleware(req, res, next) {
+        try {
+            const token = userParams.get('jwt.getToken')(req);
+            if (!token) {
+                throw new JwtExpressError(JwtExpressError.ErrorCodes.INVALID_TOKEN);
             } else {
-                next(e);
+                const tokenData = this.verify(token, userParams.get('jwt.options'), null, false);
+                const tokenPayload = (tokenData instanceof Object) ? tokenData.payload : null;
+                if (!tokenData || !tokenPayload) {
+                    throw new JwtExpressError(JwtExpressError.ErrorCodes.CORRUPTED_TOKEN);
+                } else {
+                    if (userParams.get('jwt.useBlacklist')) {
+                        const blacklistDriver = BlacklistManager.getDriver();
+                        if (blacklistDriver.isExists(token)) {
+                            throw new JwtExpressError(JwtExpressError.ErrorCodes.TOKEN_BLACKLISTED);
+                        } else {
+                            blacklistDriver.set(token, tokenData.exp);
+                        }
+                    }
+                    next();
+                }
             }
+        } catch (e) {
+            responseError(e, req, res, next);
         }
     }
 };
