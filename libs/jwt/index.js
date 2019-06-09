@@ -59,7 +59,7 @@ module.exports = class JwtManager {
         onlyPayload = onlyPayload !== false;
 
         let payload = null;
-        let err = null;
+
         try {
             if (userParams.get('jwt.useEncrypt')) {
                 token = crypter.decrypt(userParams.get('encryption.algorithm'), token, userParams.get('encryption.secret'))
@@ -69,10 +69,14 @@ module.exports = class JwtManager {
                 payload = payload.payload;
             }
         } catch (e) {
-            err = e;
+            if (callback) {
+                callback(e, null)
+            } else {
+                throw e;
+            }
         }
         if (callback) {
-            callback(err, payload)
+            callback(null, payload);
         }
         return payload;
     }
@@ -148,7 +152,7 @@ module.exports = class JwtManager {
             if (!token) {
                 throw new JwtExpressError(JwtExpressError.ErrorCodes.INVALID_TOKEN);
             } else {
-                const tokenData = this.decode(token, userParams.get('jwt.options'), null, false);
+                const tokenData = this.verify(token, userParams.get('jwt.options'), null, false);
                 const tokenPayload = (tokenData instanceof Object) ? tokenData.payload : null;
                 if (!tokenData || !tokenPayload) {
                     throw new JwtExpressError(JwtExpressError.ErrorCodes.CORRUPTED_TOKEN);
@@ -159,33 +163,36 @@ module.exports = class JwtManager {
                             throw new JwtExpressError(JwtExpressError.ErrorCodes.TOKEN_BLACKLISTED);
                         }
                     }
-                    const refreshToken = userParams.get('jwt.refresh.getToken')(req);
-                    if (!refreshToken) {
-                        throw new JwtExpressError(JwtExpressError.ErrorCodes.INVALID_TOKEN);
+                }
+            }
+        } catch (e) {
+            // validate is expired json
+            if (false) {
+                const refreshToken = userParams.get('jwt.refresh.getToken')(req);
+                if (!refreshToken) {
+                    throw new JwtExpressError(JwtExpressError.ErrorCodes.INVALID_TOKEN);
+                } else {
+                    const refreshTokenData = this.verify(refreshToken, userParams.get('jwt.refresh.options'), null, false);
+                    const refreshTokenPayload = (refreshTokenData instanceof Object) ? refreshTokenData.payload : null;
+                    if (!refreshTokenData || !refreshTokenPayload) {
+                        throw new JwtExpressError(JwtExpressError.ErrorCodes.CORRUPTED_TOKEN);
                     } else {
-                        const refreshTokenData = this.verify(refreshToken, userParams.get('jwt.refresh.options'), null, false);
-                        const refreshTokenPayload = (refreshTokenData instanceof Object) ? refreshTokenData.payload : null;
-                        if (!refreshTokenData || !refreshTokenPayload) {
-                            throw new JwtExpressError(JwtExpressError.ErrorCodes.CORRUPTED_TOKEN);
+                        if (userParams.get('jwt.useBlacklist')) {
+                            const blacklistDriver = BlacklistManager.getDriver();
+                            if (blacklistDriver.isExists(refreshToken)) {
+                                throw new JwtExpressError(JwtExpressError.ErrorCodes.TOKEN_BLACKLISTED);
+                            }
+                        }
+                        if (JSON.stringify(tokenPayload) === JSON.stringify(refreshTokenPayload)) {
+                            const newToken = this.sign(tokenPayload);
+                            res.set('authorization', newToken);
+                            next();
                         } else {
-                            if (userParams.get('jwt.useBlacklist')) {
-                                const blacklistDriver = BlacklistManager.getDriver();
-                                if (blacklistDriver.isExists(refreshToken)) {
-                                    throw new JwtExpressError(JwtExpressError.ErrorCodes.TOKEN_BLACKLISTED);
-                                }
-                            }
-                            if (JSON.stringify(tokenPayload) === JSON.stringify(refreshTokenPayload)) {
-                                const newToken = this.sign(tokenPayload);
-                                res.set('authorization', newToken);
-                                next();
-                            } else {
-                                throw new JwtExpressError(JwtExpressError.ErrorCodes.CORRUPTED_TOKEN);
-                            }
+                            throw new JwtExpressError(JwtExpressError.ErrorCodes.CORRUPTED_TOKEN);
                         }
                     }
                 }
             }
-        } catch (e) {
             responseError(e, req, res, next);
         }
     }
