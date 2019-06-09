@@ -92,9 +92,9 @@ module.exports = class UserParams {
     // }
 
     static validate(tmpUserParams) {
-        if (typeof Helpers.getProperty(tmpUserParams,'encryption.secret') !== "string") {
+        if (typeof Helpers.getProperty(tmpUserParams, 'encryption.secret') !== "string") {
             throw new Error("encryption.secret must be string type");
-        } else if (Helpers.getProperty(tmpUserParams,'encryption.secret').length !== 32) {
+        } else if (Helpers.getProperty(tmpUserParams, 'encryption.secret').length !== 32) {
             throw new Error("encryption.secret length must contains 32 characters");
         }
         console.log(tmpUserParams);
