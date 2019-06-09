@@ -131,6 +131,6 @@ module.exports = class UserParams {
         } else if (Helpers.getProperty(tmpUserParams, 'encryption.secret').length !== 32) {
             throw new Error("encryption.secret length must contains 32 characters");
         }
-        console.log(tmpUserParams);
+        // console.log(tmpUserParams);
     }
 };
