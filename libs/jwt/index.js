@@ -19,7 +19,7 @@ const responseError = (e, req, res, next) => {
                     extraObject[parts[0].trim().toLowerCase()] = parts[1].trim();
                 }
             }
-            if (error) {
+            if (errorCode) {
                 e = new JwtExpressError(errorCode, extraObject);
             }
         }
