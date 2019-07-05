@@ -74,7 +74,7 @@ module.exports = class JwtManager {
             err = e;
         }
         if (callback) {
-            callback(err, token)
+            callback(err, token);
         }
         return token;
     }
