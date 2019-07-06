@@ -135,109 +135,149 @@ module.exports = class JwtManager {
         return payload;
     }
 
-    static middleware(req, res, next) {
-        try {
-            const token = userParams.get('jwt.getToken')(req);
-            let err = null;
-            if (!token) {
-                throw new JwtExpressError(JwtExpressError.ErrorCodes.INVALID_TOKEN);
-            } else {
-                const tokenData = this.verify(token, userParams.get('jwt.options'), null, false);
-                const tokenPayload = (tokenData instanceof Object) ? tokenData.payload : null;
-                if (!tokenData || !tokenPayload) {
-                    throw new JwtExpressError(JwtExpressError.ErrorCodes.CORRUPTED_TOKEN);
-                } else {
-                    if (userParams.get('jwt.useBlacklist')) {
-                        const blacklistDriver = BlacklistManager.getDriver();
-                        if (blacklistDriver.isExists(token)) {
-                            throw new JwtExpressError(JwtExpressError.ErrorCodes.TOKEN_BLACKLISTED);
-                        }
-                    }
-                    req[userParams.get('jwt.middleware.tokenPayloadKey')] = tokenPayload;
-                    next();
-                }
-            }
-        } catch (e) {
-            responseError(e, req, res, next);
+    /**
+     *
+     * @param {Object} options
+     * @returns {Function}
+     */
+    static middleware(options = {}) {
+        if (!(options instanceof Object)) {
+            options = {};
         }
-    }
+        options = Object.assign({}, userParams.get('jwt.options'), options);
 
-    static middlewareRefreshToken(req, res, next) {
-        let tokenPayload = null;
-        try {
-            const token = userParams.get('jwt.getToken')(req);
-            if (!token) {
-                throw new JwtExpressError(JwtExpressError.ErrorCodes.INVALID_TOKEN);
-            } else {
-                const tokenData = this.verify(token, userParams.get('jwt.options'), null, false);
-                tokenPayload = (tokenData instanceof Object) ? tokenData.payload : null;
-                if (!tokenData || !tokenPayload) {
-                    throw new JwtExpressError(JwtExpressError.ErrorCodes.CORRUPTED_TOKEN);
-                } else {
-                    if (userParams.get('jwt.useBlacklist')) {
-                        const blacklistDriver = BlacklistManager.getDriver();
-                        if (blacklistDriver.isExists(token)) {
-                            throw new JwtExpressError(JwtExpressError.ErrorCodes.TOKEN_BLACKLISTED);
-                        }
-                    }
-                }
-            }
-        } catch (e) {
-            // validate is expired token
-            if (e instanceof Object && e.name === 'TokenExpiredError') {
-                const refreshToken = userParams.get('jwt.refresh.getToken')(req);
-                if (!refreshToken) {
+        return (req, res, next) => {
+            try {
+                const token = userParams.get('jwt.getToken')(req);
+                if (!token) {
                     throw new JwtExpressError(JwtExpressError.ErrorCodes.INVALID_TOKEN);
                 } else {
-                    const refreshTokenData = this.verify(refreshToken, userParams.get('jwt.refresh.options'), null, false);
-                    const refreshTokenPayload = (refreshTokenData instanceof Object) ? refreshTokenData.payload : null;
-                    if (!refreshTokenData || !refreshTokenPayload) {
+                    const tokenData = this.verify(token, options, null, false);
+                    const tokenPayload = (tokenData instanceof Object) ? tokenData.payload : null;
+                    if (!tokenData || !tokenPayload) {
                         throw new JwtExpressError(JwtExpressError.ErrorCodes.CORRUPTED_TOKEN);
                     } else {
                         if (userParams.get('jwt.useBlacklist')) {
                             const blacklistDriver = BlacklistManager.getDriver();
-                            if (blacklistDriver.isExists(refreshToken)) {
+                            if (blacklistDriver.isExists(token)) {
                                 throw new JwtExpressError(JwtExpressError.ErrorCodes.TOKEN_BLACKLISTED);
                             }
                         }
-                        if (JSON.stringify(tokenPayload) === JSON.stringify(refreshTokenPayload)) {
-                            const newToken = this.sign(tokenPayload);
-                            res.set('authorization', newToken);
-                            next();
-                        } else {
-                            throw new JwtExpressError(JwtExpressError.ErrorCodes.CORRUPTED_TOKEN);
-                        }
+                        req[userParams.get('jwt.middleware.tokenPayloadKey')] = tokenPayload;
+                        next();
                     }
                 }
+            } catch (e) {
+                responseError(e, req, res, next);
             }
-            responseError(e, req, res, next);
-        }
+        };
     }
 
-    static middlewareSignOut(req, res, next) {
-        try {
-            const token = userParams.get('jwt.getToken')(req);
-            if (!token) {
-                throw new JwtExpressError(JwtExpressError.ErrorCodes.INVALID_TOKEN);
-            } else {
-                const tokenData = this.verify(token, userParams.get('jwt.options'), null, false);
-                const tokenPayload = (tokenData instanceof Object) ? tokenData.payload : null;
-                if (!tokenData || !tokenPayload) {
-                    throw new JwtExpressError(JwtExpressError.ErrorCodes.CORRUPTED_TOKEN);
+    /**
+     *
+     * @param {Object} jwtOptions
+     * @param {Object} refreshOptions
+     * @returns {Function}
+     */
+    static middlewareRefreshToken(jwtOptions = {}, refreshOptions = {}) {
+        if (!(jwtOptions instanceof Object)) {
+            jwtOptions = {};
+        }
+        jwtOptions = Object.assign({}, userParams.get('jwt.options'), jwtOptions);
+
+        if (!(refreshOptions instanceof Object)) {
+            refreshOptions = {};
+        }
+        refreshOptions = Object.assign({}, userParams.get('jwt.refresh.options'), refreshOptions);
+
+        return (req, res, next) => {
+            let tokenPayload = null;
+            try {
+                const token = userParams.get('jwt.getToken')(req);
+                if (!token) {
+                    throw new JwtExpressError(JwtExpressError.ErrorCodes.INVALID_TOKEN);
                 } else {
-                    if (userParams.get('jwt.useBlacklist')) {
-                        const blacklistDriver = BlacklistManager.getDriver();
-                        if (blacklistDriver.isExists(token)) {
-                            throw new JwtExpressError(JwtExpressError.ErrorCodes.TOKEN_BLACKLISTED);
-                        } else {
-                            blacklistDriver.set(token, tokenData.exp);
+                    const tokenData = this.verify(token, jwtOptions, null, false);
+                    tokenPayload = (tokenData instanceof Object) ? tokenData.payload : null;
+                    if (!tokenData || !tokenPayload) {
+                        throw new JwtExpressError(JwtExpressError.ErrorCodes.CORRUPTED_TOKEN);
+                    } else {
+                        if (userParams.get('jwt.useBlacklist')) {
+                            const blacklistDriver = BlacklistManager.getDriver();
+                            if (blacklistDriver.isExists(token)) {
+                                throw new JwtExpressError(JwtExpressError.ErrorCodes.TOKEN_BLACKLISTED);
+                            }
                         }
                     }
-                    next();
                 }
+            } catch (e) {
+                // validate is expired token
+                if (e instanceof Object && e.name === 'TokenExpiredError') {
+                    const refreshToken = userParams.get('jwt.refresh.getToken')(req);
+                    if (!refreshToken) {
+                        throw new JwtExpressError(JwtExpressError.ErrorCodes.INVALID_TOKEN);
+                    } else {
+                        const refreshTokenData = this.verify(refreshToken, refreshOptions, null, false);
+                        const refreshTokenPayload = (refreshTokenData instanceof Object) ? refreshTokenData.payload : null;
+                        if (!refreshTokenData || !refreshTokenPayload) {
+                            throw new JwtExpressError(JwtExpressError.ErrorCodes.CORRUPTED_TOKEN);
+                        } else {
+                            if (userParams.get('jwt.useBlacklist')) {
+                                const blacklistDriver = BlacklistManager.getDriver();
+                                if (blacklistDriver.isExists(refreshToken)) {
+                                    throw new JwtExpressError(JwtExpressError.ErrorCodes.TOKEN_BLACKLISTED);
+                                }
+                            }
+                            if (JSON.stringify(tokenPayload) === JSON.stringify(refreshTokenPayload)) {
+                                const newToken = this.sign(tokenPayload);
+                                res.set('authorization', newToken);
+                                next();
+                            } else {
+                                throw new JwtExpressError(JwtExpressError.ErrorCodes.CORRUPTED_TOKEN);
+                            }
+                        }
+                    }
+                }
+                responseError(e, req, res, next);
             }
-        } catch (e) {
-            responseError(e, req, res, next);
+        };
+    }
+
+    /**
+     *
+     * @param {Object} options
+     * @returns {Function}
+     */
+    static middlewareSignOut(options = {}) {
+        if (!(options instanceof Object)) {
+            options = {};
         }
+        options = Object.assign({}, userParams.get('jwt.options'), options);
+        return (req, res, next) => {
+            try {
+                const token = userParams.get('jwt.getToken')(req);
+                if (!token) {
+                    throw new JwtExpressError(JwtExpressError.ErrorCodes.INVALID_TOKEN);
+                } else {
+                    const tokenData = this.verify(token, options, null, false);
+                    const tokenPayload = (tokenData instanceof Object) ? tokenData.payload : null;
+                    if (!tokenData || !tokenPayload) {
+                        throw new JwtExpressError(JwtExpressError.ErrorCodes.CORRUPTED_TOKEN);
+                    } else {
+                        if (userParams.get('jwt.useBlacklist')) {
+                            const blacklistDriver = BlacklistManager.getDriver();
+                            if (blacklistDriver.isExists(token)) {
+                                throw new JwtExpressError(JwtExpressError.ErrorCodes.TOKEN_BLACKLISTED);
+                            } else {
+                                blacklistDriver.set(token, tokenData.exp);
+                            }
+                        }
+                        next();
+                    }
+                }
+            } catch (e) {
+                responseError(e, req, res, next);
+            }
+        };
     }
 };

@@ -132,16 +132,16 @@ module.exports = class JWTExpress {
         return jwt.verify(token, options, callback, onlyPayload);
     }
 
-    static middleware(req, res, next) {
-        return jwt.middleware(req, res, next);
+    static middleware(options = {}) {
+        return jwt.middleware(options);
     }
 
-    static middlewareRefreshToken(req, res, next) {
-        return jwt.middlewareRefreshToken(req, res, next);
+    static middlewareRefreshToken(jwtOptions = {}, refreshOptions = {}) {
+        return jwt.middlewareRefreshToken(jwtOptions, refreshOptions);
     }
 
-    static middlewareSignOut(req, res, next) {
-        return jwt.middlewareSignOut(req, res, next);
+    static middlewareSignOut(options = {}) {
+        return jwt.middlewareSignOut(options);
     }
 
 
