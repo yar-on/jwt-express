@@ -74,12 +74,63 @@ module.exports = class JWTExpress {
         return jwt.middleware(req, res, next);
     }
 
+
+    /**
+     * @param {*} payload
+     * @param {Object} options
+     * @param {jwtSignCallback} callback
+     * @returns {null|string}
+     */
     static sign(payload, options = {}, callback = null) {
+        if (!(options instanceof Object)) {
+            options = {};
+        }
+
+        options = Object.assign({}, userParams.get('jwt.options'), options);
         return jwt.sign(payload, options, callback);
     }
 
+    /**
+     * @param {string} token
+     * @param {Object} options
+     * @param {jwtVerifyCallback} callback
+     * @param {boolean} onlyPayload
+     * @returns {null|string}
+     */
     static verify(token, options = {}, callback = null, onlyPayload = true) {
+        if (!(options instanceof Object)) {
+            options = {};
+        }
+
+        options = Object.assign({}, userParams.get('jwt.options'), options);
         return jwt.verify(token, options, callback, onlyPayload);
     }
+
+    static signRefresh(token, options = {}, callback = null) {
+        if (!(options instanceof Object)) {
+            options = {};
+        }
+
+        options = Object.assign({}, userParams.get('jwt.refresh.options'), options);
+        return jwt.sign(token, options, callback);
+    }
+
+    static signVerify(token, options = {}, callback = null, onlyPayload = true) {
+        if (!(options instanceof Object)) {
+            options = {};
+        }
+
+        options = Object.assign({}, userParams.get('jwt.refresh.options'), options);
+        return jwt.verify(token, options, callback, onlyPayload);
+    }
+
+    static middlewareRefreshToken(req, res, next) {
+        return jwt.middlewareRefreshToken(req, res, next);
+    }
+
+    static middlewareSignOut(req, res, next) {
+        return jwt.middlewareSignOut(req, res, next);
+    }
+
 
 };

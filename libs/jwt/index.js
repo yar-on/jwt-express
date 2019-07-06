@@ -31,19 +31,23 @@ const responseError = (e, req, res, next) => {
         if (responses[errorCode] instanceof Object) {
             response = responses[errorCode];
         }
-        res.status(response.httpCode);
-        let message = response.message;
-        if (message.includes('${')) {
-            for (let key in e.extraObject) {
-                if (e.extraObject.hasOwnProperty(key) && ["string", "number"].includes(typeof e.extraObject.hasOwnProperty(key))) {
-                    message.replace(new RegExp(`\${${key}}`, 'g'), e.extraObject[key]);
+        if (res.hasOwnProperty("status")) {
+            res.status(response.httpCode);
+            let message = response.message;
+            if (message.includes('${')) {
+                for (let key in e.extraObject) {
+                    if (e.extraObject.hasOwnProperty(key) && ["string", "number"].includes(typeof e.extraObject.hasOwnProperty(key))) {
+                        message.replace(new RegExp("{$" + key + "}", 'g'), e.extraObject[key]);
+                    }
                 }
             }
-        }
-        if (req.header['Accept'] === 'application/json') {
-            res.json({message: response.message});
+            if (req.header['Accept'] === 'application/json') {
+                res.json({message: response.message});
+            } else {
+                res.send(response.message);
+            }
         } else {
-            res.send(response.message);
+            next(new Error('Invalid response object'));
         }
     } else {
         next(e);
@@ -51,6 +55,17 @@ const responseError = (e, req, res, next) => {
 };
 
 module.exports = class JwtManager {
+    /**
+     * @callback jwtSignCallback
+     * @param {Error|null} err
+     * @param {string|null} token
+     */
+    /**
+     * @param {*} payload
+     * @param {Object} options
+     * @param {jwtSignCallback} callback
+     * @returns {null|string}
+     */
     static sign(payload, options = {}, callback = null) {
         if (typeof callback !== "function") {
             callback = null;
@@ -75,6 +90,18 @@ module.exports = class JwtManager {
         return token;
     }
 
+    /**
+     * @callback jwtVerifyCallback
+     * @param {Error|null} err
+     * @param {*|null} token
+     */
+    /**
+     * @param {string} token
+     * @param {Object} options
+     * @param {jwtVerifyCallback} callback
+     * @param {boolean} onlyPayload
+     * @returns {null|string}
+     */
     static verify(token, options = {}, callback = null, onlyPayload = true) {
         if (typeof callback !== "function") {
             callback = null;
@@ -111,6 +138,7 @@ module.exports = class JwtManager {
     static middleware(req, res, next) {
         try {
             const token = userParams.get('jwt.getToken')(req);
+            let err = null;
             if (!token) {
                 throw new JwtExpressError(JwtExpressError.ErrorCodes.INVALID_TOKEN);
             } else {
@@ -186,7 +214,7 @@ module.exports = class JwtManager {
         }
     }
 
-    static signOutMiddleware(req, res, next) {
+    static middlewareSignOut(req, res, next) {
         try {
             const token = userParams.get('jwt.getToken')(req);
             if (!token) {
