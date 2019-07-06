@@ -56,13 +56,9 @@ module.exports = class JwtManager {
             callback = null;
         }
         if (!(options instanceof Object)) {
-            if (typeof options === "function") {
-                callback = options;
-            }
             options = {};
         }
 
-        options = Object.assign({}, userParams.get('jwt.options'), options);
         let token = null;
         let err = null;
         try {
@@ -84,15 +80,11 @@ module.exports = class JwtManager {
             callback = null;
         }
         if (!(options instanceof Object)) {
-            if (typeof options === "function") {
-                callback = options;
-            }
             options = {};
         }
 
         onlyPayload = onlyPayload !== false;
 
-        options = Object.assign({}, userParams.get('jwt.options'), options);
         let payload = null;
 
         try {
@@ -142,28 +134,15 @@ module.exports = class JwtManager {
         }
     }
 
-    static signRefresh(payload, options = {}, callback = null) {
-        if (typeof callback !== "function") {
-            callback = null;
-        }
-        if (!(options instanceof Object)) {
-            if (typeof options === "function") {
-                callback = options;
-            }
-            options = {};
-        }
-        options = Object.assign({}, userParams.get('jwt.refresj.options'), options);
-        return this.sign(payload, options, callback);
-    }
-
     static middlewareRefreshToken(req, res, next) {
+        let tokenPayload = null;
         try {
             const token = userParams.get('jwt.getToken')(req);
             if (!token) {
                 throw new JwtExpressError(JwtExpressError.ErrorCodes.INVALID_TOKEN);
             } else {
                 const tokenData = this.verify(token, userParams.get('jwt.options'), null, false);
-                const tokenPayload = (tokenData instanceof Object) ? tokenData.payload : null;
+                tokenPayload = (tokenData instanceof Object) ? tokenData.payload : null;
                 if (!tokenData || !tokenPayload) {
                     throw new JwtExpressError(JwtExpressError.ErrorCodes.CORRUPTED_TOKEN);
                 } else {
