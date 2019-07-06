@@ -22,7 +22,7 @@ var jwtExpress = require('jwt-express');
 
 jwtExpress.init({
     jwt: {
-        secret: 'asdasdasdasd',
+        secret: 'mySecretShouldNeverBeTold',
     }
 });
 
@@ -98,7 +98,7 @@ example:
 var jwtExpress = require('jwt-express');
 jwtExpress.init({
     jwt: {
-        secret: 'mySecretNeverBeTold',
+        secret: 'mySecretShouldNeverBeTold',
         middleware:{
             tokenPayloadKey: 'user'
         }
@@ -129,7 +129,7 @@ example:
 var jwtExpress = require('jwt-express');
 jwtExpress.init({
     jwt: {
-        secret: 'mySecretNeverBeTold',
+        secret: 'mySecretShouldNeverBeTold',
         useBlacklist: true
     }
 });
@@ -154,7 +154,7 @@ example:
 var jwtExpress = require('jwt-express');
 jwtExpress.init({
     jwt: {
-        secret: 'mySecretNeverBeTold',
+        secret: 'mySecretShouldNeverBeTold',
         useBlacklist: true
     }
 });
