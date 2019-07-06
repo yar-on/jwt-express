@@ -51,6 +51,20 @@ verify the token and return the payload value, using jwt.options as default opti
 callback sign: function(Error|null,null|String)
 `onlyPayload:` indicate if return the payload data only or the whole token data
 
+
+## Decode method
+> **WARNING:** this method not validate the token before exclude the payload and open possebility for injections
+```nodejs
+jwtExpress.decode(token, [options = {}, callback = null, onlyPayload = true]) {
+```
+verify the token and return the payload value, using jwt.refresh.options as default options
+`token:` token to be verified and get payload from
+`options:` override the initiated options to sign with.Must be type of object.
+`callback:` should use callback function instead of return sync value of the sign method.
+callback sign: function(Error|null,null|String)
+`onlyPayload:` indicate if return the payload data only or the whole token data
+
+
 ## Sign Refresh method
 ```nodejs
 jwtExpress.signRefresh(payload, [options = {}, callback = null])
@@ -64,7 +78,7 @@ callback sign: function(Error|null,null|String)
 
 ## Verify Refresh method
 ```nodejs
-jwtExpress.verify(token, options = {}, callback = null, onlyPayload = true) {
+jwtExpress.verifyRefresh(token, [options = {}, callback = null, onlyPayload = true]) {
 ```
 verify the token and return the payload value, using jwt.refresh.options as default options
 `token:` token to be verified and get payload from
@@ -72,4 +86,94 @@ verify the token and return the payload value, using jwt.refresh.options as defa
 `callback:` should use callback function instead of return sync value of the sign method.
 callback sign: function(Error|null,null|String)
 `onlyPayload:` indicate if return the payload data only or the whole token data
+
+
+## Middleware
+### JWT middleware
+middleware for authenticate users by jwt token.
+If the token is valid, `req.user` (or any other property that preset on init method) will be set with the token payload data
+
+example:
+```nodejs
+var jwtExpress = require('jwt-express');
+jwtExpress.init({
+    jwt: {
+        secret: 'mySecretNeverBeTold',
+        middleware:{
+            tokenPayloadKey: 'user'
+        }
+    }
+});
+
+...
+
+app.get('/admin',
+  jwtExpress.middleware({
+      // any option override available
+  }),
+  function(req, res) {
+    // your logic goes here
+    // example
+    if (!req.user.isAdmin) {
+        return res.sendStatus(401);
+    }
+    res.sendStatus(200);
+  });
+```
+### Sign Out middleware
+middleware for sign out user that add to blacklist the user token.
+for really make this work, you must enable blacklist on init, `jwt:{useBlacklist = true}` 
+
+example:
+```nodejs
+var jwtExpress = require('jwt-express');
+jwtExpress.init({
+    jwt: {
+        secret: 'mySecretNeverBeTold',
+        useBlacklist: true
+    }
+});
+
+...
+
+app.get('/sign-out',
+  jwtExpress.middlewareSignOut({
+      // any option override available
+  }),
+  function(req, res) {
+    res.sendStatus(200);
+  });
+```
+
+### Refresh Token Middleware
+middleware for refresh jwt token 
+(for using default refresh middleware, you must sign & refreshSign with the exact same payload)
+
+example:
+```nodejs
+var jwtExpress = require('jwt-express');
+jwtExpress.init({
+    jwt: {
+        secret: 'mySecretNeverBeTold',
+        useBlacklist: true
+    }
+});
+
+...
+
+app.get('/sign-out',
+  jwtExpress.middlewareSignOut({
+      // any jwt option override available
+  }, {
+    // any refresh options override avaible
+  }),
+  function(req, res) {
+    res.sendStatus(200);
+  });
+```
+
+
+
+
+
 
