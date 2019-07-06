@@ -136,6 +136,51 @@ module.exports = class JwtManager {
     }
 
     /**
+     * @callback jwtDecodeCallback
+     * @param {Error|null} err
+     * @param {*|null} token
+     */
+    /**
+     * @param {string} token
+     * @param {Object} options
+     * @param {jwtVerifyCallback} callback
+     * @param {boolean} onlyPayload
+     * @returns {null|string}
+     */
+    static decode(token, options = {}, callback = null, onlyPayload = true) {
+        if (typeof callback !== "function") {
+            callback = null;
+        }
+        if (!(options instanceof Object)) {
+            options = {};
+        }
+
+        onlyPayload = onlyPayload !== false;
+
+        let payload = null;
+
+        try {
+            if (userParams.get('jwt.useEncrypt')) {
+                token = crypter.decrypt(userParams.get('encryption.algorithm'), token, userParams.get('encryption.secret'))
+            }
+            payload = jwt.decode(token, userParams.get('jwt.secret'), options);
+            if (onlyPayload) {
+                payload = payload.payload;
+            }
+        } catch (e) {
+            if (callback) {
+                callback(e, null)
+            } else {
+                throw e;
+            }
+        }
+        if (callback) {
+            callback(null, payload);
+        }
+        return payload;
+    }
+
+    /**
      *
      * @param {Object} options
      * @returns {Function}
@@ -197,9 +242,9 @@ module.exports = class JwtManager {
                 if (!token) {
                     throw new JwtExpressError(JwtExpressError.ErrorCodes.INVALID_TOKEN);
                 } else {
-                    const tokenData = this.verify(token, jwtOptions, null, false);
-                    tokenPayload = (tokenData instanceof Object) ? tokenData.payload : null;
-                    if (!tokenData || !tokenPayload) {
+                    tokenPayload = this.decode(token, jwtOptions, null, false);
+                    this.verify(token, jwtOptions, null, false);
+                    if (!tokenPayload) {
                         throw new JwtExpressError(JwtExpressError.ErrorCodes.CORRUPTED_TOKEN);
                     } else {
                         if (userParams.get('jwt.useBlacklist')) {
@@ -208,6 +253,10 @@ module.exports = class JwtManager {
                                 throw new JwtExpressError(JwtExpressError.ErrorCodes.TOKEN_BLACKLISTED);
                             }
                         }
+                        // no refresh needed
+                        const fakeErr = new Error('TokenExpiredError');
+                        fakeErr.name = 'TokenExpiredError';
+                        throw fakeErr;
                     }
                 }
             } catch (e) {
@@ -256,6 +305,7 @@ module.exports = class JwtManager {
         return (req, res, next) => {
             try {
                 const token = userParams.get('jwt.getToken')(req);
+                const refreshToken = userParams.get('jwt.refresh.getToken')(req);
                 if (!token) {
                     throw new JwtExpressError(JwtExpressError.ErrorCodes.INVALID_TOKEN);
                 } else {
@@ -270,6 +320,10 @@ module.exports = class JwtManager {
                                 throw new JwtExpressError(JwtExpressError.ErrorCodes.TOKEN_BLACKLISTED);
                             } else {
                                 blacklistDriver.set(token, tokenData.exp);
+                                if (refreshToken) {
+                                    const refreshTokenData = this.verify(token, options, null, false);
+                                    blacklistDriver.set(refreshToken, refreshTokenData.exp);
+                                }
                             }
                         }
                         next();
