@@ -173,7 +173,101 @@ app.get('/sign-out',
 ```
 
 
+## Default Initiate params
+**The only required param is jwt.secret value**
+```nodejs
 
+jwtExpress.init({
+    jwt: {
+        options: {
+            algorithm: 'HS256',
+            expiresIn: '5m',
+            // notBefore: undefined,
+            // audience: undefined,
+            // issuer: undefined,
+            // jwtid: undefined,
+            // subject: undefined,
+            // noTimestamp: undefined,
+            // header: undefined,
+            // keyid: undefined,
+            // mutatePayload: false
+        },
+        refresh: {
+            options: {
+                algorithm: 'HS256',
+                expiresIn: '7d',
+                // notBefore: undefined,
+                // audience: undefined,
+                // issuer: undefined,
+                // jwtid: undefined,
+                // subject: undefined,
+                // noTimestamp: undefined,
+                // header: undefined,
+                // keyid: undefined,
+                // mutatePayload: false
+            },
+            getToken: (req) => {
+                if (req.headers && req.headers['refresh-token'] && typeof req.headers['refresh-token'] === "string") {
+                    const parts = req.headers.authorization.split(' ');
+                    if (parts.length === 2) {
+                        const scheme = parts[0];
+                        const token = parts[1];
+
+                        if (scheme === "Bearer") {
+                            return token;
+                        } else {
+                            throw new JwtExpressError(JwtExpressError.ErrorCodes.INVALID_TOKEN_SCHEMA);
+                        }
+                    } else {
+                        throw new JwtExpressError(JwtExpressError.ErrorCodes.INVALID_TOKEN);
+                    }
+                } else {
+                    throw new JwtExpressError(JwtExpressError.ErrorCodes.MISSING_TOKEN);
+                }
+            },
+        },
+        secret: null,
+        useEncrypt: false,
+        useBlacklist: false,
+        getToken: (req) => {
+            if (req.headers && req.headers.authorization && typeof req.headers.authorization === "string") {
+                const parts = req.headers.authorization.split(' ');
+                if (parts.length === 2) {
+                    const scheme = parts[0];
+                    const token = parts[1];
+
+                    if (scheme === "Bearer") {
+                        return token;
+                    } else {
+                        throw new JwtExpressError(JwtExpressError.ErrorCodes.INVALID_TOKEN_SCHEMA);
+                    }
+                } else {
+                    throw new JwtExpressError(JwtExpressError.ErrorCodes.INVALID_TOKEN);
+                }
+            } else {
+                throw new JwtExpressError(JwtExpressError.ErrorCodes.MISSING_TOKEN);
+            }
+        },
+        middleware: {
+            tokenPayloadKey: 'user',
+        },
+        blacklist: {
+            driverName: 'memory',
+            driverParams: {
+                clearExpiredItemsInterval: '5m',
+                clearExpiredItemsIntervalDelay: null,
+            },
+            customInstance: null,
+        },
+    },
+    encryption: {
+        algorithm: 'aes-256-cbc',
+    },
+    localization: {
+        responses: require('../localization/en/responses'),
+    },
+});
+```
 
 
 
