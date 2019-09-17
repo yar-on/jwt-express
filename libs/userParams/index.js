@@ -16,40 +16,6 @@ const DEFAULT_PARAMS = {
             // keyid: undefined,
             // mutatePayload: false
         },
-        refresh: {
-            options: {
-                algorithm: 'HS256',
-                expiresIn: '7d',
-                // notBefore: undefined,
-                // audience: undefined,
-                // issuer: undefined,
-                // jwtid: undefined,
-                // subject: undefined,
-                // noTimestamp: undefined,
-                // header: undefined,
-                // keyid: undefined,
-                // mutatePayload: false
-            },
-            getToken: (req) => {
-                if (req.headers && req.headers['refresh-token'] && typeof req.headers['refresh-token'] === "string") {
-                    const parts = req.headers.authorization.split(' ');
-                    if (parts.length === 2) {
-                        const scheme = parts[0];
-                        const token = parts[1];
-
-                        if (scheme === "Bearer") {
-                            return token;
-                        } else {
-                            throw new JwtExpressError(JwtExpressError.ErrorCodes.INVALID_TOKEN_SCHEMA);
-                        }
-                    } else {
-                        throw new JwtExpressError(JwtExpressError.ErrorCodes.INVALID_TOKEN);
-                    }
-                } else {
-                    throw new JwtExpressError(JwtExpressError.ErrorCodes.MISSING_TOKEN);
-                }
-            },
-        },
         secret: null,
         useEncrypt: false,
         useBlacklist: false,
@@ -82,6 +48,40 @@ const DEFAULT_PARAMS = {
                 clearExpiredItemsIntervalDelay: null,
             },
             customInstance: null,
+        },
+        refresh: {
+            options: {
+                algorithm: 'HS256',
+                expiresIn: '7d',
+                // notBefore: undefined,
+                // audience: undefined,
+                // issuer: undefined,
+                // jwtid: undefined,
+                // subject: undefined,
+                // noTimestamp: undefined,
+                // header: undefined,
+                // keyid: undefined,
+                // mutatePayload: false
+            },
+            getToken: (req) => {
+                if (req.headers && req.headers['refresh-token'] && typeof req.headers['refresh-token'] === "string") {
+                    const parts = req.headers['refresh-token'].split(' ');
+                    if (parts.length === 2) {
+                        const scheme = parts[0];
+                        const token = parts[1];
+
+                        if (scheme === "Bearer") {
+                            return token;
+                        } else {
+                            throw new JwtExpressError(JwtExpressError.ErrorCodes.INVALID_TOKEN_SCHEMA);
+                        }
+                    } else {
+                        throw new JwtExpressError(JwtExpressError.ErrorCodes.INVALID_TOKEN);
+                    }
+                } else {
+                    throw new JwtExpressError(JwtExpressError.ErrorCodes.MISSING_TOKEN);
+                }
+            },
         },
     },
     encryption: {
