@@ -257,7 +257,6 @@ jwtExpress.init({
                 clearExpiredItemsInterval: '5m',
                 clearExpiredItemsIntervalDelay: null,
             },
-            customInstance: null,
         },
     },
     encryption: {

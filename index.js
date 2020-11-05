@@ -123,7 +123,7 @@ module.exports = class JWTExpress {
      * @param {boolean} onlyPayload
      * @returns {null|string}
      */
-    static signVerify(token, options = {}, callback = null, onlyPayload = true) {
+    static verifyRefresh(token, options = {}, callback = null, onlyPayload = true) {
         if (!(options instanceof Object)) {
             options = {};
         }

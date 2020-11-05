@@ -4,7 +4,7 @@
   "description": "JsonWebToken (JWT) manager for express,",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha -b tests/index.js"
   },
   "repository": {
     "type": "git",
@@ -19,5 +19,9 @@
   "dependencies": {
     "jsonwebtoken": "^8.5.0",
     "ms": "^2.1.1"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "mocha": "^6.2.0"
   }
 }
