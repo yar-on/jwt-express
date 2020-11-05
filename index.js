@@ -1,5 +1,5 @@
-const userParams = require('./libs/userParams');
-const jwt = require('./libs/jwt');
+const UserParams = require('./libs/userParams');
+const Jwt = require('./libs/jwt');
 
 
 module.exports = class JWTExpress {
@@ -64,10 +64,10 @@ module.exports = class JWTExpress {
     /**
      * Init Props by user params
      * @param {Props} params
-     * @param {boolean} forceReInit
      */
-    static init(params, forceReInit = false) {
-        userParams.init(params)
+    constructor(params) {
+        this.userParams = new UserParams(params);
+        this.jwt = new Jwt(this.userParams);
     }
 
     /**
@@ -76,13 +76,13 @@ module.exports = class JWTExpress {
      * @param {jwtSignCallback} callback
      * @returns {null|string}
      */
-    static sign(payload, options = {}, callback = null) {
+    sign(payload, options = {}, callback = null) {
         if (!(options instanceof Object)) {
             options = {};
         }
 
-        options = Object.assign({}, userParams.get('jwt.options'), options);
-        return jwt.sign(payload, options, callback);
+        options = Object.assign({}, this.userParams.get('jwt.options'), options);
+        return this.jwt.sign(payload, options, callback);
     }
 
     /**
@@ -92,13 +92,13 @@ module.exports = class JWTExpress {
      * @param {boolean} onlyPayload
      * @returns {null|string}
      */
-    static verify(token, options = {}, callback = null, onlyPayload = true) {
+    verify(token, options = {}, callback = null, onlyPayload = true) {
         if (!(options instanceof Object)) {
             options = {};
         }
 
-        options = Object.assign({}, userParams.get('jwt.options'), options);
-        return jwt.verify(token, options, callback, onlyPayload);
+        options = Object.assign({}, this.userParams.get('jwt.options'), options);
+        return this.jwt.verify(token, options, callback, onlyPayload);
     }
 
     /**
@@ -107,13 +107,13 @@ module.exports = class JWTExpress {
      * @param {jwtSignCallback} callback
      * @returns {null|string}
      */
-    static signRefresh(payload, options = {}, callback = null) {
+    signRefresh(payload, options = {}, callback = null) {
         if (!(options instanceof Object)) {
             options = {};
         }
 
-        options = Object.assign({}, userParams.get('jwt.refresh.options'), options);
-        return jwt.sign(payload, options, callback);
+        options = Object.assign({}, this.userParams.get('jwt.refresh.options'), options);
+        return this.jwt.sign(payload, options, callback);
     }
 
     /**
@@ -123,25 +123,25 @@ module.exports = class JWTExpress {
      * @param {boolean} onlyPayload
      * @returns {null|string}
      */
-    static verifyRefresh(token, options = {}, callback = null, onlyPayload = true) {
+    verifyRefresh(token, options = {}, callback = null, onlyPayload = true) {
         if (!(options instanceof Object)) {
             options = {};
         }
 
-        options = Object.assign({}, userParams.get('jwt.refresh.options'), options);
-        return jwt.verify(token, options, callback, onlyPayload);
+        options = Object.assign({}, this.userParams.get('jwt.refresh.options'), options);
+        return this.jwt.verify(token, options, callback, onlyPayload);
     }
 
-    static middleware(options = {}) {
-        return jwt.middleware(options);
+    middleware(options = {}) {
+        return this.jwt.middleware(options);
     }
 
-    static middlewareRefreshToken(jwtOptions = {}, refreshOptions = {}) {
-        return jwt.middlewareRefreshToken(jwtOptions, refreshOptions);
+    middlewareRefreshToken(jwtOptions = {}, refreshOptions = {}) {
+        return this.jwt.middlewareRefreshToken(jwtOptions, refreshOptions);
     }
 
-    static middlewareSignOut(options = {}) {
-        return jwt.middlewareSignOut(options);
+    middlewareSignOut(options = {}) {
+        return this.jwt.middlewareSignOut(options);
     }
 
 

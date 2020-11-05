@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 const crypter = require('../crypter');
 const JwtExpressError = require('./errors');
 const BlacklistManager = require('./blacklistManager');
-const userParams = require('../userParams');
+const UserParams = require('../userParams');
 
 const responseError = (e, req, res, next) => {
     if (e instanceof Object) {
@@ -56,6 +56,14 @@ const responseError = (e, req, res, next) => {
 
 module.exports = class JwtManager {
     /**
+     * 
+     * @param {UserParams} userParams
+     */
+    constructor(userParams) {
+        this.userParams = userParams;
+    }
+    
+    /**
      * @callback jwtSignCallback
      * @param {Error|null} err
      * @param {string|null} token
@@ -66,7 +74,7 @@ module.exports = class JwtManager {
      * @param {jwtSignCallback} callback
      * @returns {null|string}
      */
-    static sign(payload, options = {}, callback = null) {
+     sign(payload, options = {}, callback = null) {
         if (typeof callback !== "function") {
             callback = null;
         }
@@ -77,15 +85,17 @@ module.exports = class JwtManager {
         let token = null;
         let err = null;
         try {
-            token = jwt.sign({payload: payload}, userParams.get('jwt.secret'), options);
-            if (userParams.get('jwt.useEncrypt')) {
-                token = crypter.encrypt(userParams.get('encryption.algorithm'), token, userParams.get('encryption.secret'));
+            token = jwt.sign({payload: payload}, this.userParams.get('jwt.secret'), options);
+            if (this.userParams.get('jwt.useEncrypt')) {
+                token = crypter.encrypt(this.userParams.get('encryption.algorithm'), token, this.userParams.get('encryption.secret'));
             }
         } catch (e) {
             err = e;
         }
         if (callback) {
             callback(err, token);
+        } else if (err){
+            throw err;
         }
         return token;
     }
@@ -102,7 +112,7 @@ module.exports = class JwtManager {
      * @param {boolean} onlyPayload
      * @returns {null|string}
      */
-    static verify(token, options = {}, callback = null, onlyPayload = true) {
+     verify(token, options = {}, callback = null, onlyPayload = true) {
         if (typeof callback !== "function") {
             callback = null;
         }
@@ -115,10 +125,10 @@ module.exports = class JwtManager {
         let payload = null;
 
         try {
-            if (userParams.get('jwt.useEncrypt')) {
-                token = crypter.decrypt(userParams.get('encryption.algorithm'), token, userParams.get('encryption.secret'))
+            if (this.userParams.get('jwt.useEncrypt')) {
+                token = crypter.decrypt(this.userParams.get('encryption.algorithm'), token, this.userParams.get('encryption.secret'))
             }
-            payload = jwt.verify(token, userParams.get('jwt.secret'), options);
+            payload = jwt.verify(token, this.userParams.get('jwt.secret'), options);
             if (onlyPayload) {
                 payload = payload.payload;
             }
@@ -147,7 +157,7 @@ module.exports = class JwtManager {
      * @param {boolean} onlyPayload
      * @returns {null|string}
      */
-    static decode(token, options = {}, callback = null, onlyPayload = true) {
+     decode(token, options = {}, callback = null, onlyPayload = true) {
         if (typeof callback !== "function") {
             callback = null;
         }
@@ -160,10 +170,10 @@ module.exports = class JwtManager {
         let payload = null;
 
         try {
-            if (userParams.get('jwt.useEncrypt')) {
-                token = crypter.decrypt(userParams.get('encryption.algorithm'), token, userParams.get('encryption.secret'))
+            if (this.userParams.get('jwt.useEncrypt')) {
+                token = crypter.decrypt(this.userParams.get('encryption.algorithm'), token, this.userParams.get('encryption.secret'))
             }
-            payload = jwt.decode(token, userParams.get('jwt.secret'), options);
+            payload = jwt.decode(token, this.userParams.get('jwt.secret'), options);
             if (onlyPayload) {
                 payload = payload.payload;
             }
@@ -185,15 +195,15 @@ module.exports = class JwtManager {
      * @param {Object} options
      * @returns {Function}
      */
-    static middleware(options = {}) {
+     middleware(options = {}) {
         if (!(options instanceof Object)) {
             options = {};
         }
-        options = Object.assign({}, userParams.get('jwt.options'), options);
+        options = Object.assign({}, this.userParams.get('jwt.options'), options);
 
         return (req, res, next) => {
             try {
-                const token = userParams.get('jwt.getToken')(req);
+                const token = this.userParams.get('jwt.getToken')(req);
                 if (!token) {
                     throw new JwtExpressError(JwtExpressError.ErrorCodes.INVALID_TOKEN);
                 } else {
@@ -202,13 +212,13 @@ module.exports = class JwtManager {
                     if (!tokenData || !tokenPayload) {
                         throw new JwtExpressError(JwtExpressError.ErrorCodes.CORRUPTED_TOKEN);
                     } else {
-                        if (userParams.get('jwt.useBlacklist')) {
+                        if (this.userParams.get('jwt.useBlacklist')) {
                             const blacklistDriver = BlacklistManager.getDriver();
                             if (blacklistDriver.isExists(token)) {
                                 throw new JwtExpressError(JwtExpressError.ErrorCodes.TOKEN_BLACKLISTED);
                             }
                         }
-                        req[userParams.get('jwt.middleware.tokenPayloadKey')] = tokenPayload;
+                        req[this.userParams.get('jwt.middleware.tokenPayloadKey')] = tokenPayload;
                         next();
                     }
                 }
@@ -224,21 +234,21 @@ module.exports = class JwtManager {
      * @param {Object} refreshOptions
      * @returns {Function}
      */
-    static middlewareRefreshToken(jwtOptions = {}, refreshOptions = {}) {
+     middlewareRefreshToken(jwtOptions = {}, refreshOptions = {}) {
         if (!(jwtOptions instanceof Object)) {
             jwtOptions = {};
         }
-        jwtOptions = Object.assign({}, userParams.get('jwt.options'), jwtOptions);
+        jwtOptions = Object.assign({}, this.userParams.get('jwt.options'), jwtOptions);
 
         if (!(refreshOptions instanceof Object)) {
             refreshOptions = {};
         }
-        refreshOptions = Object.assign({}, userParams.get('jwt.refresh.options'), refreshOptions);
+        refreshOptions = Object.assign({}, this.userParams.get('jwt.refresh.options'), refreshOptions);
 
         return (req, res, next) => {
             let tokenPayload = null;
             try {
-                const token = userParams.get('jwt.getToken')(req);
+                const token = this.userParams.get('jwt.getToken')(req);
                 if (!token) {
                     throw new JwtExpressError(JwtExpressError.ErrorCodes.INVALID_TOKEN);
                 } else {
@@ -247,7 +257,7 @@ module.exports = class JwtManager {
                     if (!tokenPayload) {
                         throw new JwtExpressError(JwtExpressError.ErrorCodes.CORRUPTED_TOKEN);
                     } else {
-                        if (userParams.get('jwt.useBlacklist')) {
+                        if (this.userParams.get('jwt.useBlacklist')) {
                             const blacklistDriver = BlacklistManager.getDriver();
                             if (blacklistDriver.isExists(token)) {
                                 throw new JwtExpressError(JwtExpressError.ErrorCodes.TOKEN_BLACKLISTED);
@@ -262,7 +272,7 @@ module.exports = class JwtManager {
             } catch (e) {
                 // validate is expired token
                 if (e instanceof Object && e.name === 'TokenExpiredError') {
-                    const refreshToken = userParams.get('jwt.refresh.getToken')(req);
+                    const refreshToken = this.userParams.get('jwt.refresh.getToken')(req);
                     if (!refreshToken) {
                         throw new JwtExpressError(JwtExpressError.ErrorCodes.INVALID_TOKEN);
                     } else {
@@ -271,7 +281,7 @@ module.exports = class JwtManager {
                         if (!refreshTokenData || !refreshTokenPayload) {
                             throw new JwtExpressError(JwtExpressError.ErrorCodes.CORRUPTED_TOKEN);
                         } else {
-                            if (userParams.get('jwt.useBlacklist')) {
+                            if (this.userParams.get('jwt.useBlacklist')) {
                                 const blacklistDriver = BlacklistManager.getDriver();
                                 if (blacklistDriver.isExists(refreshToken)) {
                                     throw new JwtExpressError(JwtExpressError.ErrorCodes.TOKEN_BLACKLISTED);
@@ -297,15 +307,15 @@ module.exports = class JwtManager {
      * @param {Object} options
      * @returns {Function}
      */
-    static middlewareSignOut(options = {}) {
+     middlewareSignOut(options = {}) {
         if (!(options instanceof Object)) {
             options = {};
         }
-        options = Object.assign({}, userParams.get('jwt.options'), options);
+        options = Object.assign({}, this.userParams.get('jwt.options'), options);
         return (req, res, next) => {
             try {
-                const token = userParams.get('jwt.getToken')(req);
-                const refreshToken = userParams.get('jwt.refresh.getToken')(req);
+                const token = this.userParams.get('jwt.getToken')(req);
+                const refreshToken = this.userParams.get('jwt.refresh.getToken')(req);
                 if (!token) {
                     throw new JwtExpressError(JwtExpressError.ErrorCodes.INVALID_TOKEN);
                 } else {
@@ -314,7 +324,7 @@ module.exports = class JwtManager {
                     if (!tokenData || !tokenPayload) {
                         throw new JwtExpressError(JwtExpressError.ErrorCodes.CORRUPTED_TOKEN);
                     } else {
-                        if (userParams.get('jwt.useBlacklist')) {
+                        if (this.userParams.get('jwt.useBlacklist')) {
                             const blacklistDriver = BlacklistManager.getDriver();
                             if (blacklistDriver.isExists(token)) {
                                 throw new JwtExpressError(JwtExpressError.ErrorCodes.TOKEN_BLACKLISTED);

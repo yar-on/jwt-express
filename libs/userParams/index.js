@@ -92,20 +92,14 @@ const DEFAULT_PARAMS = {
     },
 };
 
-
-let firstInit = true;
-
 module.exports = class UserParams {
-    static init(params) {
-        if (firstInit) {
-            firstInit = false;
-            const tmpUserParams = Helpers.deepMerge(DEFAULT_PARAMS, params);
-            this.validate(tmpUserParams);
-            this.userParams = tmpUserParams;
-        }
+    constructor(params) {
+        const tmpUserParams = Helpers.deepMerge(DEFAULT_PARAMS, params);
+        this.validate(tmpUserParams);
+        this.userParams = tmpUserParams;
     }
 
-    static get(key) {
+    get(key) {
         return Helpers.getProperty(this.userParams, key);
     }
 
@@ -127,7 +121,7 @@ module.exports = class UserParams {
     //     }
     // }
 
-    static validate(tmpUserParams) {
+    validate(tmpUserParams) {
         if (Helpers.getProperty(tmpUserParams, 'encryption.secret') !== undefined) {
             if (typeof Helpers.getProperty(tmpUserParams, 'encryption.secret') !== "string") {
                 throw new Error("encryption.secret must be string type");
